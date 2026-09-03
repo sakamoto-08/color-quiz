@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>色当てクイズ (Color Quiz)</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="quiz-container">
+      <h1>色当てクイズ</h1>
+
+      <!-- 画面1: クイズ画面 -->
+      <div id="quiz-screen">
+        <!-- 進捗表示 -->
+        <p id="progress" class="progress-text">第 1 / 10 問</p>
+
+        <!-- RGB色を表示するメインパネル -->
+        <div id="color-panel" class="color-panel"></div>
+
+        <!-- 正解・不正解のフィードバックメッセージ -->
+        <p id="feedback" class="feedback-text"></p>
+
+        <!-- 4択選択肢ボタンエリア -->
+        <div id="options-container" class="options-grid"></div>
+      </div>
+
+      <!-- 画面2: リザルト画面（初期状態は非表示） -->
+      <div id="result-screen" class="result-screen hidden">
+        <h2>結果発表</h2>
+        <p id="final-score" class="score-text"></p>
+        <button id="restart-btn" class="primary-btn">もう一度挑戦する</button>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
