@@ -1,15 +1,11 @@
 # 色当てクイズ (Color Quiz)
 
 画面のカラーパネルに表示された色を見て、正しい色名を4択から選ぶクイズアプリです。
-HTML / CSS / JavaScript のみで構成された静的サイトです。GitHub Pages での公開を想定しています。
+HTML / CSS / JavaScript のみで構成された静的サイトで、GitHub Pages にて公開しています。
 
 ## デモ
 
-Pages を有効化すると、以下の URL で遊べます。
-
-[https://sakamoto-08.github.io/color-quiz/](https://sakamoto-08.github.io/color-quiz/)
-
-（2026-09-08 時点では未公開のため、上記 URL は 404 になります）
+[こちらから遊べます](https://sakamoto-08.github.io/color-quiz/)
 
 ## 遊び方
 
@@ -54,7 +50,6 @@ color-quiz/
 - 出題数や難易度（似た色を選択肢に含める等）の選択機能の追加
 - localStorage を活用したハイスコア記録・ランキング機能
 - 効果音（SE）やタイマー要素の追加によるゲーム性の向上
-- GitHub Pages での公開
 
 ## 作成者
 
