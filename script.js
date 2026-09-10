@@ -1,138 +1,154 @@
-// --- 1. 色データの定義 (英語名・日本語名・RGB値) ---
+// クイズ用カラーデータセット（全カテゴリ4色ずつに統一）
 const COLOR_DATA = [
-  { name: "レッド (Red)", rgb: "rgb(255, 0, 0)" },
-  { name: "ブルー (Blue)", rgb: "rgb(0, 0, 255)" },
-  { name: "グリーン (Green)", rgb: "rgb(0, 128, 0)" },
-  { name: "イエロー (Yellow)", rgb: "rgb(255, 255, 0)" },
-  { name: "オレンジ (Orange)", rgb: "rgb(255, 165, 0)" },
-  { name: "パープル (Purple)", rgb: "rgb(128, 0, 128)" },
-  { name: "ピンク (Pink)", rgb: "rgb(255, 192, 203)" },
-  { name: "ブラウン (Brown)", rgb: "rgb(165, 42, 42)" },
-  { name: "グレー (Gray)", rgb: "rgb(128, 128, 128)" },
-  { name: "ブラック (Black)", rgb: "rgb(0, 0, 0)" },
-  { name: "ホワイト (White)", rgb: "rgb(255, 255, 255)" },
-  { name: "シアン (Cyan)", rgb: "rgb(0, 255, 255)" },
-  { name: "マゼンタ (Magenta)", rgb: "rgb(255, 0, 255)" },
+  // 赤・ピンク系（4色）
+  { name: "レッド", rgb: "rgb(255, 0, 0)", category: "red" },
+  { name: "マゼンタ", rgb: "rgb(255, 0, 255)", category: "red" },
+  { name: "ピンク", rgb: "rgb(255, 192, 203)", category: "red" },
+  { name: "ローズ", rgb: "rgb(255, 0, 128)", category: "red" },
+
+  // 青・シアン系（4色）
+  { name: "シアン", rgb: "rgb(0, 255, 255)", category: "blue" },
+  { name: "ターコイズ", rgb: "rgb(64, 224, 208)", category: "blue" },
+  { name: "ブルー", rgb: "rgb(0, 0, 255)", category: "blue" },
+  { name: "スカイブルー", rgb: "rgb(135, 206, 235)", category: "blue" },
+
+  // オレンジ・ブラウン・黄系（4色）
+  { name: "ブラウン", rgb: "rgb(139, 69, 19)", category: "brown" },
+  { name: "オレンジ", rgb: "rgb(255, 165, 0)", category: "brown" },
+  { name: "イエロー", rgb: "rgb(255, 255, 0)", category: "brown" },
+  { name: "アンバー", rgb: "rgb(255, 191, 0)", category: "brown" },
+
+  // 白・グレー系（4色）
+  { name: "グレー", rgb: "rgb(128, 128, 128)", category: "gray" },
+  { name: "アイボリー", rgb: "rgb(255, 255, 240)", category: "gray" },
+  { name: "シルバー", rgb: "rgb(192, 192, 192)", category: "gray" },
+  { name: "ホワイト", rgb: "rgb(245, 245, 245)", category: "gray" },
+
+  // 緑系（4色）
+  { name: "グリーン", rgb: "rgb(0, 128, 0)", category: "green" },
+  { name: "ライムグリーン", rgb: "rgb(50, 205, 50)", category: "green" },
+  { name: "オリーブ", rgb: "rgb(128, 128, 0)", category: "green" },
+  { name: "ミントグリーン", rgb: "rgb(152, 255, 204)", category: "green" },
 ];
 
-const TOTAL_QUESTIONS = 10; // 全問題数
+let currentQuestion = 0;
+let score = 0;
+const TOTAL_QUESTIONS = 10;
+let quizQuestions = [];
 
-// --- 2. 状態管理変数 ---
-let currentQuestionIndex = 0; // 現在の問題番号
-let score = 0; // 正答数
-let currentCorrectAnswer = null; // 現在の問の正解データ
-let questionQueue = []; // 今ラウンドの出題順（重複なし）
-
-// --- 3. DOM要素の取得 ---
-const quizScreen = document.getElementById("quiz-screen");
-const resultScreen = document.getElementById("result-screen");
+// DOM要素の取得
 const progressEl = document.getElementById("progress");
 const colorPanelEl = document.getElementById("color-panel");
 const feedbackEl = document.getElementById("feedback");
 const optionsContainerEl = document.getElementById("options-container");
+const quizScreenEl = document.getElementById("quiz-screen");
+const resultScreenEl = document.getElementById("result-screen");
 const finalScoreEl = document.getElementById("final-score");
 const restartBtn = document.getElementById("restart-btn");
 
-// --- 4. 初期化・イベント設定 ---
-restartBtn.addEventListener("click", startQuiz);
-
-// ゲーム開始
-startQuiz();
-
-function startQuiz() {
-  currentQuestionIndex = 0;
-  score = 0;
-  questionQueue = shuffle([...COLOR_DATA]).slice(0, TOTAL_QUESTIONS);
-
-  resultScreen.classList.add("hidden");
-  quizScreen.classList.remove("hidden");
-
-  nextQuestion();
-}
-
-// Fisher–Yates で配列をシャッフルする
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
+// 配列をシャッフルする関数
+function shuffleArray(array) {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
   }
-  return array;
+  return newArray;
 }
 
-// --- 5. 問題出題処理 ---
-function nextQuestion() {
-  // パネルとフィードバックの表示初期化
-  colorPanelEl.className = "color-panel";
+// クイズの初期化
+function initQuiz() {
+  currentQuestion = 0;
+  score = 0;
+  quizQuestions = shuffleArray(COLOR_DATA).slice(0, TOTAL_QUESTIONS);
+
+  quizScreenEl.classList.remove("hidden");
+  resultScreenEl.classList.add("hidden");
+
+  loadQuestion();
+}
+
+// 選択肢の生成ロジック（安全な同系色優先処理）
+function generateOptions(correctAnswer) {
+  // 正解以外のすべての選択肢候補
+  const otherColors = COLOR_DATA.filter(
+    (item) => item.name !== correctAnswer.name,
+  );
+
+  // 同系色とそれ以外に分ける
+  const sameCategory = shuffleArray(
+    otherColors.filter((item) => item.category === correctAnswer.category),
+  );
+  const diffCategory = shuffleArray(
+    otherColors.filter((item) => item.category !== correctAnswer.category),
+  );
+
+  // 同系色を優先してまとめ、3つ抽出する
+  const candidates = [...sameCategory, ...diffCategory];
+  const selectedDummies = candidates.slice(0, 3);
+
+  // 正解を入れて4択にし、シャッフル
+  return shuffleArray([correctAnswer, ...selectedDummies]);
+}
+
+// 問題の読み込み
+function loadQuestion() {
   feedbackEl.textContent = "";
-  feedbackEl.className = "feedback-text";
+  colorPanelEl.className = "color-panel";
+
+  const currentData = quizQuestions[currentQuestion];
+  progressEl.textContent = `第 ${currentQuestion + 1} / ${TOTAL_QUESTIONS} 問`;
+  colorPanelEl.style.backgroundColor = currentData.rgb;
+
   optionsContainerEl.innerHTML = "";
+  const options = generateOptions(currentData);
 
-  // 10問終了したら結果画面へ
-  if (currentQuestionIndex >= TOTAL_QUESTIONS) {
-    showResult();
-    return;
-  }
-
-  // 進捗表示の更新
-  progressEl.textContent = `第 ${currentQuestionIndex + 1} / ${TOTAL_QUESTIONS} 問`;
-
-  // 開始時に決めた出題順から正解を取り出す（重複なし）
-  currentCorrectAnswer = questionQueue[currentQuestionIndex];
-
-  // パネル背景色を設定
-  colorPanelEl.style.backgroundColor = currentCorrectAnswer.rgb;
-
-  // 4つの選択肢を作成（正解1つ + ダミー3つ）
-  const options = generateOptions(currentCorrectAnswer);
-
-  // ボタンを生成して画面に配置
-  options.forEach((color) => {
-    const btn = document.createElement("button");
-    btn.className = "option-btn";
-    btn.textContent = color.name;
-    btn.addEventListener("click", () => handleAnswer(color));
-    optionsContainerEl.appendChild(btn);
+  options.forEach((option) => {
+    const button = document.createElement("button");
+    button.className = "option-btn";
+    button.textContent = option.name;
+    button.addEventListener("click", () =>
+      handleAnswer(option.name, currentData.name),
+    );
+    optionsContainerEl.appendChild(button);
   });
 }
 
-// 選択肢（4つ）を生成する関数
-function generateOptions(correctColor) {
-  // 正解以外の色を取得
-  const dummies = COLOR_DATA.filter((c) => c.name !== correctColor.name);
-
-  // ダミー配列をシャッフルして3つ抽出
-  const selectedDummies = shuffle(dummies).slice(0, 3);
-
-  // 正解とダミーを結合し、再度シャッフル
-  return shuffle([correctColor, ...selectedDummies]);
-}
-
-// --- 6. 回答判定処理 ---
-function handleAnswer(selectedColor) {
-  // 二重クリック防止のため全ボタンを無効化
-  const buttons = optionsContainerEl.querySelectorAll("button");
+// 回答処理
+function handleAnswer(selectedName, correctName) {
+  const buttons = optionsContainerEl.querySelectorAll(".option-btn");
   buttons.forEach((btn) => (btn.disabled = true));
 
-  // 正誤判定
-  if (selectedColor.name === currentCorrectAnswer.name) {
+  if (selectedName === correctName) {
     score++;
+    feedbackEl.textContent = "〇 正解！";
+    feedbackEl.className = "feedback-text correct";
     colorPanelEl.classList.add("correct");
-    feedbackEl.textContent = "正解！";
-    feedbackEl.classList.add("correct");
   } else {
+    feedbackEl.textContent = `× 不正解... (正解: ${correctName})`;
+    feedbackEl.className = "feedback-text incorrect";
     colorPanelEl.classList.add("incorrect");
-    feedbackEl.textContent = `不正解… 正解は「${currentCorrectAnswer.name}」でした`;
-    feedbackEl.classList.add("incorrect");
   }
 
-  // インデックスを進めて1.5秒後に次の問題へ
-  currentQuestionIndex++;
-  setTimeout(nextQuestion, 1500);
+  setTimeout(() => {
+    currentQuestion++;
+    if (currentQuestion < TOTAL_QUESTIONS) {
+      loadQuestion();
+    } else {
+      showResult();
+    }
+  }, 1200);
 }
 
-// --- 7. 結果画面表示 ---
+// 結果画面表示
 function showResult() {
-  quizScreen.classList.add("hidden");
-  resultScreen.classList.remove("hidden");
+  quizScreenEl.classList.add("hidden");
+  resultScreenEl.classList.remove("hidden");
   finalScoreEl.textContent = `${score} / ${TOTAL_QUESTIONS}`;
 }
+
+// リスタートイベント
+restartBtn.addEventListener("click", initQuiz);
+
+// アプリ開始
+initQuiz();
